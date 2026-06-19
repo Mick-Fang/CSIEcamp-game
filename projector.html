@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>椰子怪討伐戰 — 投影大螢幕</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body {
+            background-color: #0f172a; /* 深色底更適合投影，字體更亮 */
+            color: #f8fafc;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(14, 116, 144, 0.25) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(120, 53, 15, 0.2) 0px, transparent 50%),
+                radial-gradient(at 50% 100%, rgba(21, 128, 61, 0.15) 0px, transparent 50%);
+        }
+        h1, h2, h3, h4 {
+            color: var(--sand-medium);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        .glass-card {
+            background: var(--card-bg-dark);
+            border-color: var(--card-border-dark);
+            color: #f1f5f9;
+        }
+        .team-name {
+            color: #f8fafc;
+        }
+        .leaderboard-item {
+            background: rgba(30, 41, 59, 0.7);
+            border-color: rgba(255, 255, 255, 0.05);
+        }
+        .leaderboard-item.rank-1 {
+            background: linear-gradient(to right, rgba(234, 179, 8, 0.35), rgba(30, 41, 59, 0.7));
+            border-color: rgba(234, 179, 8, 0.4);
+        }
+        .leaderboard-item.rank-2 {
+            background: linear-gradient(to right, rgba(148, 163, 184, 0.25), rgba(30, 41, 59, 0.7));
+            border-color: rgba(148, 163, 184, 0.3);
+        }
+        .leaderboard-item.rank-3 {
+            background: linear-gradient(to right, rgba(249, 115, 22, 0.25), rgba(30, 41, 59, 0.7));
+            border-color: rgba(249, 115, 22, 0.3);
+        }
+        
+        /* 戰鬥打擊震動特效 */
+        .hurt-shake {
+            animation: shake 0.5s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body>
+    <!-- Confetti canvas for victory -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- Ocean wave overlay -->
+    <div class="projector-bg-waves"></div>
+    
+    <div class="container" style="max-width: 1600px; height: 95vh; display: flex; flex-direction: column; justify-content: space-between;">
+        <!-- Top bar -->
+        <header style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid rgba(255,255,255,0.1); padding-bottom: 1rem; margin-bottom: 1rem;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <h1 style="font-size: 2.2rem; margin: 0; background: linear-gradient(to right, #fde047, #f97316); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                    🥥 椰子怪討伐戰 🥥
+                </h1>
+                <span class="phase-header-badge" id="projector-phase-badge" style="background: var(--ocean-dark); font-size: 1.1rem; padding: 0.4rem 1rem;">-</span>
+            </div>
+            <div>
+                <h2 style="font-size: 1.8rem; margin: 0; color: var(--sand-medium);">
+                    第 <span id="projector-round-num">-</span> / 8 回合
+                </h2>
+            </div>
+        </header>
+
+        <!-- Main Workspace -->
+        <div class="projector-layout">
+            <!-- Left Panel: Battle Arena -->
+            <div class="battle-arena" id="projector-arena-panel">
+                
+                <!-- SETUP PHASE VIEW -->
+                <div id="view-setup" style="text-align: center; display: none;" class="float-element">
+                    <h2 style="font-size: 3rem; margin-bottom: 1rem; color: #fde047;">🏝️ 椰子之島大冒險</h2>
+                    <p style="font-size: 1.6rem; color: #cbd5e1; max-width: 700px; line-height: 1.6; margin: 0 auto; margin-bottom: 2rem;">
+                        歡迎來到南島討伐戰！請各位勇士登錄隊伍名稱。<br>
+                        準備好防禦邪惡椰子的侵襲，並用有限的體力將魔物斬草除根！
+                    </p>
+                    <div style="font-size: 1.25rem; color: var(--sunset-yellow); background: rgba(234, 88, 12, 0.1); border: 1px dashed var(--sunset-orange); padding: 0.75rem 1.5rem; border-radius: 12px; display: inline-block;">
+                        📢 <strong>提示</strong>：請主持人於「控制後台」點擊<strong>「開始椰子怪討伐戰」</strong>以啟動遊戲！
+                    </div>
+                </div>
+
+                <!-- BID_VANGUARD PHASE VIEW -->
+                <div id="view-bid-vanguard" style="text-align: center; display: none;">
+                    <div class="glass-card" style="padding: 3rem; border-radius: 30px; border-top: 5px solid var(--ocean-medium);">
+                        <h2 style="font-size: 2.5rem; margin-bottom: 1.5rem; color: var(--ocean-medium);">⚔️ 前鋒部隊祕密招募中</h2>
+                        <p style="font-size: 1.4rem; line-height: 1.8; color: #cbd5e1; margin-bottom: 2rem;">
+                            請各隊決定本回合要秘密投入多少體力爭奪前鋒位置，<br>
+                            以及拿出多少個 <strong>👿 邪惡椰子</strong> 來召喚本次討伐的魔物！<br>
+                            <span style="color: #eab308; font-weight:700;">（前鋒隊伍將會扣除投標體力，並以賸餘體力對魔物造成傷害）</span>
+                        </p>
+                        <div class="pulse-element" style="font-size: 1.2rem; color: var(--sand-dark);">
+                            🌊 關主輸入中，請耐心等待...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BATTLE_VANGUARD / BATTLE_SUPPORT PHASE VIEW -->
+                <div id="view-battle" style="width: 100%; display: none; text-align: center; position: relative;">
+                    <!-- Floating Damage Numbers will render here -->
+                    <div id="damage-floating-area"></div>
+
+                    <!-- Monster Container -->
+                    <div style="max-width: 600px; margin: 0 auto;">
+                        <div class="monster-card" id="projector-monster-card" style="background: rgba(15, 23, 42, 0.8); border: 2px solid var(--card-border-dark);">
+                            <div class="monster-ribbon" id="projector-monster-level">HP SCALE 1x</div>
+                            <div class="monster-image-container" style="background: linear-gradient(to bottom, #1e293b, #0f172a); height: 350px;">
+                                <img src="assets/placeholder.png" alt="椰子怪" class="monster-image" id="projector-monster-img">
+                            </div>
+                            <div class="monster-content">
+                                <div class="monster-title-row">
+                                    <h3 class="monster-name" id="projector-monster-name" style="color: #fff; font-size: 2.2rem;">-</h3>
+                                    <div class="monster-hp-numeric" id="projector-monster-hp-text" style="font-size: 1.8rem;">HP: 100/100</div>
+                                </div>
+                                <p class="monster-desc" id="projector-monster-desc" style="color: #94a3b8; font-size: 1.1rem; line-height: 1.5; min-height: 50px;">-</p>
+                                
+                                <div class="hp-bar-container" style="height: 28px; border-radius: 14px; border-color: #334155; background: #1e293b;">
+                                    <div class="hp-bar-fill" id="projector-hp-fill" style="background: linear-gradient(to right, #ef4444, #f97316);"></div>
+                                    <div class="hp-bar-text" id="projector-hp-percent" style="color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.8); font-size: 1.1rem;">100%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Attacking Troops Indicator -->
+                    <div class="glass-card" style="margin-top: 1.5rem; border-radius: 16px; padding: 1.25rem;">
+                        <h4 style="color: #fde047; margin-bottom: 0.5rem; font-size: 1.3rem;" id="battle-troop-title">🏹 前鋒討伐進行中！</h4>
+                        <div id="battle-troop-list" style="font-size: 1.2rem; display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap;">
+                            <!-- Teams in attack -->
+                        </div>
+                        <div style="font-size: 1.3rem; font-weight: 700; margin-top: 0.5rem; color: #38bdf8;">
+                            總攻擊力（造成傷害）：<span id="battle-total-damage" style="font-size: 1.5rem; color: #f43f5e;">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BID_SUPPORT PHASE VIEW -->
+                <div id="view-bid-support" style="text-align: center; display: none;">
+                    <div class="glass-card" style="padding: 3rem; border-radius: 30px; border-top: 5px solid var(--sunset-yellow); max-width: 700px; margin: 0 auto;">
+                        <h2 style="font-size: 2.5rem; margin-bottom: 1.5rem; color: var(--sunset-yellow);">🛡️ 後援補刀階段開始</h2>
+                        <p style="font-size: 1.4rem; line-height: 1.8; color: #cbd5e1; margin-bottom: 2rem;">
+                            前鋒隊伍力竭，椰子怪仍殘血存活！<br>
+                            請其餘<strong>未加入前鋒</strong>的隊伍，秘密申報<strong>「後援競標體力」</strong>。<br>
+                            <span style="color: #38bdf8; font-weight:700;">（後援成功將獲得 +2 分，背叛者若有投入體力可獲得 +1 分）</span>
+                        </p>
+                        <div class="pulse-element" style="font-size: 1.2rem; color: var(--sand-dark);">
+                            🌊 後援競標輸入中，請大夥決定策略...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ROUND_END PHASE VIEW -->
+                <div id="view-round-end" style="text-align: center; display: none; width: 100%;">
+                    <div class="glass-card" style="padding: 2rem; max-width: 750px; margin: 0 auto; border-top: 5px solid var(--success-green);">
+                        <h2 style="font-size: 2.5rem; margin-bottom: 1.5rem; color: var(--success-green);">🎉 本回合戰鬥結算</h2>
+                        
+                        <div style="margin: 1.5rem 0; text-align: left; background: rgba(15, 23, 42, 0.4); padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
+                            <h3 style="color: var(--sand-medium); margin-bottom: 1rem; font-size: 1.4rem;">🎯 隊伍加分總覽：</h3>
+                            <div id="projector-round-summary" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 1.15rem;">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+
+                        <div class="pulse-element" style="color: var(--sand-dark); font-size: 1.2rem;">
+                            🌴 主持人即將開啟下一回合，請各位作好準備...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GAME_OVER PHASE VIEW -->
+                <div id="view-game-over" style="text-align: center; display: none; width: 100%;">
+                    <h2 style="font-size: 3.5rem; margin-bottom: 0.5rem; color: var(--sunset-yellow); font-family: var(--font-heading);">
+                        👑 終極椰子征服者 👑
+                    </h2>
+                    <p style="font-size: 1.5rem; color: #cbd5e1; margin-bottom: 1.5rem;">經過 8 回合的浴血奮戰，光榮的勝出者已誕生！</p>
+
+                    <!-- Podium component -->
+                    <div class="podium-container" id="projector-podium">
+                        <!-- Loaded dynamically -->
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Panel: Leaderboard / Rankings -->
+            <div class="glass-card" style="display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+                <div>
+                    <h3 style="font-size: 1.6rem; border-bottom: 2px solid rgba(255,255,255,0.1); padding-bottom: 0.75rem; margin-bottom: 1rem; text-align: center; color: var(--sunset-yellow);">
+                        🏆 小隊即時排行榜
+                    </h3>
+                    <div class="leaderboard-container" id="projector-leaderboard">
+                        <!-- Rendered with ranks and animations -->
+                    </div>
+                </div>
+                
+                <div style="font-size: 0.85rem; color: #64748b; text-align: center; margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.5rem;">
+                    💡 排行榜根據得分自動排序（同分則隨機並列，前鋒競標時分數低者優先）
+                </div>
+            </div>
+        </div>
+
+        <!-- Audio notification elements (optional, can play default synth or beep) -->
+        <div style="display: none;">
+            <audio id="audio-hit" src="https://assets.mixkit.co/active_storage/sfx/2767/2767-120.wav" preload="auto"></audio>
+            <audio id="audio-cheer" src="https://assets.mixkit.co/active_storage/sfx/2019/2019-120.wav" preload="auto"></audio>
+        </div>
+    </div>
+
+    <!-- Tie-breaker Roulette Sync Modal (Projector View) -->
+    <div id="projector-roulette-modal" class="spinner-modal" style="display: none;">
+        <div class="spinner-content" style="background: #1e293b; border-color: #334155; color: #f8fafc;">
+            <h3 style="color: var(--sunset-orange); margin-bottom: 1rem; font-size: 1.5rem;">🎰 命運椰子大轉盤</h3>
+            <div class="wheel-container">
+                <div class="wheel-pointer"></div>
+                <div id="projector-roulette-wheel" class="roulette-wrapper" style="border-color: #475569;">
+                    <!-- Slices generated dynamically -->
+                </div>
+            </div>
+            <p id="projector-wheel-result-text" style="font-weight: 700; color: var(--sand-medium); font-size: 1.2rem; min-height: 30px; margin-top: 1rem;"></p>
+        </div>
+    </div>
+
+    <!-- Core Scripts -->
+    <script src="js/game.js"></script>
+    <script src="js/projector.js"></script>
+</body>
+</html>

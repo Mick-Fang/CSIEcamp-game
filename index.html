@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>椰子怪討伐戰 — 遊戲入口門戶</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="projector-bg-waves"></div>
+    
+    <div class="portal-container">
+        <h1 class="portal-title sway-element">🥥 椰子怪討伐戰 🥥</h1>
+        <p class="portal-subtitle">資訊營賽局遊戲說明與即時控制系統</p>
+        
+        <div class="glass-card" style="margin-bottom: 2.5rem; text-align: left; max-width: 700px; line-height: 1.6;">
+            <h3 style="color: var(--ocean-dark); margin-bottom: 0.75rem;">🏝️ 雙螢幕同步運作說明</h3>
+            <p>本系統採用 <strong>免伺服器 (Serverless) 的即時本地同步技術</strong>。為了達到最佳的遊戲體驗，請依照以下步驟操作：</p>
+            <ol style="margin-left: 1.5rem; margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                <li>將您的筆記型電腦連接至<strong>教室投影機</strong>，並將顯示模式設為<strong>「延伸螢幕」</strong>。</li>
+                <li>在您筆電本身的螢幕上，點擊下方左側的<strong>「進入主持人後台」</strong>。</li>
+                <li>將瀏覽器視窗拖移至投影畫面，點擊下方右側的<strong>「開啟投影顯示幕」</strong>（並按 F11 進入全螢幕）。</li>
+                <li>主持人在後台的每一次操作（輸入體力、決定勝負、進入下一輪），投影畫面皆會<strong>即時以 3D 動效與音效同步更新</strong>！</li>
+            </ol>
+        </div>
+
+        <div class="portal-buttons">
+            <a href="host.html" class="glass-card portal-card" style="border-top: 4px solid var(--sunset-orange);">
+                <h3>💻 主持人控制後台</h3>
+                <p>管理 10 個小隊的參賽名稱，輸入每輪的邪惡椰子數量、前鋒/後援競標體力，掌控遊戲進度與手動分數修正。</p>
+            </a>
+            
+            <a href="projector.html" target="_blank" class="glass-card portal-card" style="border-top: 4px solid var(--ocean-dark);">
+                <h3>📺 投影大螢幕顯示</h3>
+                <p>專為投影機設計的劇院級畫面。包含精美的南島插圖、動態血條、怪獸揭示卡、以及即時自動重排的小隊排行榜。</p>
+            </a>
+        </div>
+
+        <div>
+            <button class="btn btn-secondary" onclick="resetAllData()" style="font-size: 0.9rem; padding: 0.5rem 1rem; opacity: 0.7;">
+                🔄 清除本地緩存並重置遊戲
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function resetAllData() {
+            if (confirm("確定要重置所有遊戲數據嗎？這會清除所有小隊的得分與當前進度。")) {
+                localStorage.removeItem("coconut_game_state");
+                alert("數據已重置！");
+            }
+        }
+    </script>
+</body>
+</html>
