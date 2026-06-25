@@ -2,6 +2,39 @@
 
 const engine = new GameEngine();
 
+// 追蹤投影幕視窗引用 (為了解決 file:// 協議跨網域 localStorage 同步限制)
+const projectorWindows = new Set();
+
+function openProjector() {
+    const win = window.open('projector.html', '_blank');
+    if (win) {
+        projectorWindows.add(win);
+        // 等待投影網頁加載後送出當前狀態
+        setTimeout(() => {
+            win.postMessage({ type: 'COCONUT_STATE_UPDATE', state: engine.state }, '*');
+        }, 500);
+    }
+}
+
+function broadcastMessage(msg) {
+    projectorWindows.forEach(win => {
+        if (win.closed) {
+            projectorWindows.delete(win);
+        } else {
+            win.postMessage(msg, '*');
+        }
+    });
+}
+
+// 監聽來自投影網頁的主動連線要求
+window.addEventListener('message', (event) => {
+    if (!event.data) return;
+    if (event.data.type === 'COCONUT_REQUEST_STATE') {
+        projectorWindows.add(event.source);
+        event.source.postMessage({ type: 'COCONUT_STATE_UPDATE', state: engine.state }, '*');
+    }
+});
+
 // DOM 元素引用
 const secSetup = document.getElementById("phase-setup");
 const secBidVanguard = document.getElementById("phase-bid-vanguard");
@@ -38,6 +71,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // 監聽引擎內部 saveState 觸發的事件
     window.addEventListener("state_updated", () => {
         render();
+        broadcastMessage({ type: 'COCONUT_STATE_UPDATE', state: engine.state });
     });
 
     // 綁定表單提交
@@ -502,12 +536,16 @@ function spinTheWheelAction() {
 
     // 這裡把轉盤事件寫入 localStorage 以同步投影幕！
     const winner = activeCandidates[winningCandidateIndex];
-    localStorage.setItem("coconut_spin_event", JSON.stringify({
+    const spinData = {
         candidates: activeCandidates,
         winnerId: winner.id,
         targetDeg: targetDeg,
         timestamp: Date.now()
-    }));
+    };
+    localStorage.setItem("coconut_spin_event", JSON.stringify(spinData));
+    
+    // 同時透過 postMessage 廣播以支持 file:// 協議！
+    broadcastMessage({ type: 'COCONUT_WHEEL_SPIN', eventData: spinData });
 
     // 3. 觸發 CSS 動效
     rouletteWheel.style.transition = "transform 4s cubic-bezier(0.15, 0.85, 0.35, 1.02)";

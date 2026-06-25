@@ -57,6 +57,22 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    // 監聽來自 Host 的 postMessage 訊息 (為了解決 file:// 協議下 localStorage 同步限制)
+    window.addEventListener("message", (e) => {
+        if (!e.data) return;
+        if (e.data.type === "COCONUT_STATE_UPDATE") {
+            engine.state = e.data.state;
+            renderProjector();
+        } else if (e.data.type === "COCONUT_WHEEL_SPIN") {
+            handleSyncedWheelSpin(e.data.eventData);
+        }
+    });
+
+    // 初始化時，如果是由 Host 點選「開啟投影幕」按鈕以 window.open 開啟的，主動跟 Host 請求狀態
+    if (window.opener) {
+        window.opener.postMessage({ type: "COCONUT_REQUEST_STATE" }, "*");
+    }
+
     // 啟動 Confetti 迴圈
     initConfetti();
 });
