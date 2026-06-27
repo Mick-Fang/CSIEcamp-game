@@ -4,9 +4,8 @@ const engine = new GameEngine();
 
 // DOM 元素引用
 const viewSetup = document.getElementById("view-setup");
-const viewBidVanguard = document.getElementById("view-bid-vanguard");
+const viewBid = document.getElementById("view-bid");
 const viewBattle = document.getElementById("view-battle");
-const viewBidSupport = document.getElementById("view-bid-support");
 const viewRoundEnd = document.getElementById("view-round-end");
 const viewGameOver = document.getElementById("view-game-over");
 
@@ -23,11 +22,9 @@ const monsterHpText = document.getElementById("projector-monster-hp-text");
 const monsterDesc = document.getElementById("projector-monster-desc");
 const hpFill = document.getElementById("projector-hp-fill");
 const hpPercent = document.getElementById("projector-hp-percent");
-const monsterLevel = document.getElementById("projector-monster-level");
 
-const battleTroopTitle = document.getElementById("battle-troop-title");
-const battleTroopList = document.getElementById("battle-troop-list");
-const battleTotalDamage = document.getElementById("battle-total-damage");
+const battleSequenceTitle = document.getElementById("battle-sequence-title");
+const battleSequenceList = document.getElementById("battle-sequence-list");
 const damageFloatingArea = document.getElementById("damage-floating-area");
 
 // 音效
@@ -37,11 +34,11 @@ const audioCheer = document.getElementById("audio-cheer");
 // 內部狀態追蹤
 let lastMonsterHp = null;
 let lastPhase = null;
+let lastRoundTracker = null;
 let audioUnlocked = false;
 
 // 頁面加載
 document.addEventListener("DOMContentLoaded", () => {
-    // 建立一個防阻擋音效的點擊遮罩
     createAudioUnlockOverlay();
     
     renderProjector();
@@ -51,29 +48,23 @@ document.addEventListener("DOMContentLoaded", () => {
         if (e.key === "coconut_game_state") {
             engine.loadState();
             renderProjector();
-        } else if (e.key === "coconut_spin_event") {
-            // 監聽到轉盤事件，與 Host 同步轉盤動效！
-            handleSyncedWheelSpin(JSON.parse(e.newValue));
         }
     });
 
-    // 監聽來自 Host 的 postMessage 訊息 (為了解決 file:// 協議下 localStorage 同步限制)
+    // 監聽來自 Host 的 postMessage 訊息
     window.addEventListener("message", (e) => {
         if (!e.data) return;
         if (e.data.type === "COCONUT_STATE_UPDATE") {
             engine.state = e.data.state;
             renderProjector();
-        } else if (e.data.type === "COCONUT_WHEEL_SPIN") {
-            handleSyncedWheelSpin(e.data.eventData);
         }
     });
 
-    // 初始化時，如果是由 Host 點選「開啟投影幕」按鈕以 window.open 開啟的，主動跟 Host 請求狀態
+    // 初始化時主動跟 Host 請求狀態
     if (window.opener) {
         window.opener.postMessage({ type: "COCONUT_REQUEST_STATE" }, "*");
     }
 
-    // 啟動 Confetti 迴圈
     initConfetti();
 });
 
@@ -97,7 +88,6 @@ function createAudioUnlockOverlay() {
         setTimeout(() => overlay.remove(), 500);
         audioUnlocked = true;
         
-        // 撥放一個無聲音效以解鎖瀏覽器限制
         if (audioHit) {
             audioHit.muted = true;
             audioHit.play().then(() => {
@@ -113,15 +103,19 @@ function createAudioUnlockOverlay() {
 function renderProjector() {
     const state = engine.state;
 
+    // 跨回合時重置血量追蹤，避免播放多餘的扣血動畫
+    if (lastRoundTracker !== state.round) {
+        lastMonsterHp = null;
+        lastRoundTracker = state.round;
+    }
+
     // 1. 更新基本狀態字樣
     projRoundNum.textContent = state.round;
 
     const phaseBadges = {
         "SETUP": "準備出征",
-        "BID_VANGUARD": "前鋒挑選",
-        "BATTLE_VANGUARD": "前鋒討伐",
-        "BID_SUPPORT": "後援競標",
-        "BATTLE_SUPPORT": "後援討伐",
+        "BID": "體力投入中",
+        "BATTLE": "討伐決戰",
         "ROUND_END": "回合結算",
         "GAME_OVER": "最終結算"
     };
@@ -129,36 +123,31 @@ function renderProjector() {
 
     // 2. 切換各階段畫面視圖
     viewSetup.style.display = "none";
-    viewBidVanguard.style.display = "none";
+    viewBid.style.display = "none";
     viewBattle.style.display = "none";
-    viewBidSupport.style.display = "none";
     viewRoundEnd.style.display = "none";
     viewGameOver.style.display = "none";
 
-    // 關閉轉盤如果它還開著 (除非處在 BATTLE_VANGUARD 且 isTied 狀態)
-    if (!(state.phase === "BATTLE_VANGUARD" && state.vanguardTieStatus && state.vanguardTieStatus.isTied)) {
-        closeProjectorWheel();
+    const sharedMonsterContainer = document.getElementById("shared-monster-container");
+    if (state.phase === "BID" || state.phase === "BATTLE" || state.phase === "ROUND_END") {
+        sharedMonsterContainer.style.display = "block";
+    } else {
+        sharedMonsterContainer.style.display = "none";
     }
 
     if (state.phase === "SETUP") {
         viewSetup.style.display = "block";
         stopConfetti();
-    } else if (state.phase === "BID_VANGUARD") {
-        viewBidVanguard.style.display = "block";
+    } else if (state.phase === "BID") {
+        viewBid.style.display = "block";
         stopConfetti();
-    } else if (state.phase === "BATTLE_VANGUARD") {
-        renderBattlePanel("vanguard");
-        viewBattle.style.display = "block";
-    } else if (state.phase === "BID_SUPPORT") {
-        viewBidSupport.style.display = "block";
-    } else if (state.phase === "BATTLE_SUPPORT") {
-        renderBattlePanel("support");
+    } else if (state.phase === "BATTLE") {
+        renderBattlePanel();
         viewBattle.style.display = "block";
     } else if (state.phase === "ROUND_END") {
         renderRoundEndPanel();
         viewRoundEnd.style.display = "block";
         
-        // 如果剛進入結算且有人加分，撒一下花
         const anyScoreGained = state.teams.some(t => t.scoreGainedThisRound > 0);
         if (lastPhase !== "ROUND_END" && anyScoreGained) {
             playCheer();
@@ -171,11 +160,12 @@ function renderProjector() {
         startConfetti();
     }
 
-    // 3. 渲染小隊排行榜 (附帶重排動畫)
+    // 3. 渲染小隊排行榜
     renderLeaderboard();
 
-    // 存入本次 HP 供下次對比以作扣血特效
+    // 4. 動效與音效觸發 (扣血)
     if (state.monster) {
+        renderMonsterInfo();
         if (lastMonsterHp !== null && state.monster.hp < lastMonsterHp) {
             triggerDamageEffect(lastMonsterHp - state.monster.hp);
         }
@@ -187,53 +177,62 @@ function renderProjector() {
     lastPhase = state.phase;
 }
 
-// 渲染戰鬥面板 (前鋒/後援)
-function renderBattlePanel(mode) {
+// 獨立渲染怪獸資訊 (用於 BID, BATTLE, ROUND_END 階段)
+function renderMonsterInfo() {
     const state = engine.state;
     if (!state.monster) return;
 
-    // 1. 怪獸資料
     monsterName.textContent = state.monster.name;
     monsterDesc.textContent = state.monster.desc;
     monsterImg.src = state.monster.img;
     monsterHpText.textContent = `HP: ${state.monster.hp} / ${state.monster.maxHp}`;
     
-    // HP 條計算
     const pct = Math.round((state.monster.hp / state.monster.maxHp) * 100);
     hpFill.style.width = `${pct}%`;
     hpPercent.textContent = `${pct}%`;
+}
 
-    // 顯示血量比例倍率
-    if (state.monsterHpScale !== 1) {
-        monsterLevel.style.display = "block";
-        monsterLevel.textContent = `HP 比例: ${(state.monsterHpScale).toFixed(2)}x`;
-    } else {
-        monsterLevel.style.display = "none";
-    }
+// 渲染戰鬥序列
+function renderBattlePanel() {
+    const state = engine.state;
 
-    // 2. 參戰隊伍顯示
-    if (mode === "vanguard") {
-        battleTroopTitle.textContent = "🏹 前鋒討伐部隊出戰中！";
-        const vanguardTeams = state.teams.filter(t => t.role === "vanguard");
-        battleTroopList.innerHTML = vanguardTeams
-            .map(t => `
-                <div class="glass-card" style="padding: 0.5rem 1rem; border-color: var(--danger-red);">
-                    <strong>${t.name}</strong> <span style="font-size:0.9rem; color:var(--sand-dark);">(攻擊力: ${t.stamina})</span>
-                </div>
-            `)
-            .join("");
-        battleTotalDamage.textContent = state.vanguardDamage;
+    // 戰況轉播
+    if (state.attackSequence.length === 0) {
+        battleSequenceList.innerHTML = `<div class="glass-card" style="padding: 0.5rem 1rem; border-color: #64748b; font-size: 1.1rem; color: #cbd5e1;">無隊伍發動攻擊 (全數棄權或未投入體力)</div>`;
     } else {
-        battleTroopTitle.textContent = "🛡️ 後援部隊補刀中！";
-        const supportTeams = state.teams.filter(t => t.role === "support");
-        battleTroopList.innerHTML = supportTeams
-            .map(t => `
-                <div class="glass-card" style="padding: 0.5rem 1rem; border-color: var(--success-green);">
-                    <strong>${t.name}</strong> <span style="font-size:0.9rem; color:var(--sand-dark);">(攻擊力: ${t.stamina})</span>
-                </div>
-            `)
+        battleSequenceList.innerHTML = state.attackSequence
+            .map((seq, idx) => {
+                const t = state.teams.find(tm => tm.id === seq.teamId);
+                let resultSpan = "";
+                let borderColor = "var(--ocean-dark)";
+                let extraStyles = "";
+                
+                if (seq.result === "win") {
+                    resultSpan = `<span style="color:var(--success-green); font-weight:700;"> 💥 致命一擊! </span>`;
+                    borderColor = "var(--success-green)";
+                    extraStyles = "background: rgba(16, 185, 129, 0.1); transform: scale(1.05); font-weight: bold;";
+                } else if (seq.result === "hit") {
+                    resultSpan = `<span style="color:var(--danger-red);"> -${seq.bid} 傷害</span>`;
+                    borderColor = "var(--danger-red)";
+                } else if (seq.result === "skipped_boss_dead") {
+                    resultSpan = `<span style="color:#64748b;"> (Boss已倒下，未出手)</span>`;
+                    borderColor = "#334155";
+                    extraStyles = "opacity: 0.6; text-decoration: line-through;";
+                } else if (seq.result === "win_survived") {
+                    resultSpan = `<span style="color:var(--success-green); font-weight:700;"> 🏆 首位出擊加分! </span>`;
+                    borderColor = "var(--success-green)";
+                }
+
+                return `
+                    <div class="glass-card" style="padding: 0.5rem 1rem; border-color: ${borderColor}; ${extraStyles}">
+                        <span style="color:#94a3b8; font-size:0.9rem;">${idx + 1}.</span> 
+                        <strong>${t.name}</strong> 
+                        <span style="font-size:0.9rem; color:var(--sand-dark);">(${seq.bid} 體力)</span>
+                        ${resultSpan}
+                    </div>
+                `;
+            })
             .join("");
-        battleTotalDamage.textContent = state.supportDamage;
     }
 }
 
@@ -241,29 +240,24 @@ function renderBattlePanel(mode) {
 function triggerDamageEffect(dmg) {
     if (dmg <= 0) return;
     
-    // 播放打擊音效
     playHit();
 
-    // 怪物卡片震動
     monsterCard.classList.add("hurt-shake");
     setTimeout(() => {
         monsterCard.classList.remove("hurt-shake");
     }, 500);
 
-    // 飄出紅色扣血數字
     const dmgEl = document.createElement("div");
     dmgEl.className = "damage-number";
     dmgEl.textContent = `-${dmg}`;
     
-    // 隨機在怪獸卡片中央偏上下處出生
-    const randomX = 50 + (Math.random() * 20 - 10); // %
-    const randomY = 40 + (Math.random() * 20 - 10); // %
+    const randomX = 50 + (Math.random() * 20 - 10);
+    const randomY = 40 + (Math.random() * 20 - 10);
     dmgEl.style.left = `${randomX}%`;
     dmgEl.style.top = `${randomY}%`;
 
     damageFloatingArea.appendChild(dmgEl);
     
-    // 動效播放完後移除
     setTimeout(() => {
         dmgEl.remove();
     }, 1200);
@@ -292,26 +286,34 @@ function renderRoundEndPanel() {
     
     container.innerHTML = state.teams
         .map(t => {
-            let roleLabel = "";
             let color = "#cbd5e1";
-            if (t.role === "vanguard") {
-                roleLabel = "前鋒";
-                color = "var(--danger-red)";
-            } else if (t.role === "support") {
-                roleLabel = "後援";
+            let scoreColor = "#94a3b8";
+            let reason = "平靜度過";
+
+            if (t.status === "winner_kill") {
                 color = "var(--success-green)";
-            } else if (t.role === "traitor") {
-                roleLabel = "背叛";
-                color = "#8b5cf6";
+                scoreColor = "var(--success-green)";
+                reason = "討伐成功！";
+            } else if (t.status === "winner_survive") {
+                color = "var(--sunset-orange)";
+                scoreColor = "var(--sunset-orange)";
+                reason = "勇氣的祝福!";
+            } else if (t.status === "skipped") {
+                color = "var(--danger-red)";
+                scoreColor = "var(--danger-red)";
+                reason = "撞號棄權扣分";
+            } else if (t.status === "valid") {
+                color = "var(--ocean-dark)";
+                reason = "出擊未成";
             }
 
             return `
                 <div style="background: rgba(255,255,255,0.05); padding: 0.75rem; border-radius: 12px; display:flex; justify-content:space-between; align-items:center;">
                     <span>
-                        <strong style="color: ${color};">[${roleLabel}]</strong> ${t.name}
+                        <strong style="color: ${color};">[${reason}]</strong> ${t.name}
                     </span>
-                    <strong style="color: ${t.scoreGainedThisRound > 0 ? 'var(--success-green)' : '#94a3b8'};">
-                        +${t.scoreGainedThisRound} 分
+                    <strong style="color: ${scoreColor};">
+                        ${t.scoreGainedThisRound > 0 ? '+' : ''}${t.scoreGainedThisRound} 分
                     </strong>
                 </div>
             `;
@@ -369,13 +371,9 @@ function renderGameOverPanel() {
 function renderLeaderboard() {
     const state = engine.state;
     
-    // 排行榜排序邏輯：
-    // 分數從大到小排序。
-    // 如果是 BID_VANGUARD 階段，我們想看目前分數；如果是平手，則分數低優先
-    // 這裡我們只按分數降序排序。
+    // 排行榜排序邏輯：只按分數降序
     const sorted = [...state.teams].sort((a, b) => b.score - a.score);
     
-    // 渲染
     projLeaderboard.innerHTML = sorted
         .map((t, index) => {
             const rank = index + 1;
@@ -384,17 +382,13 @@ function renderLeaderboard() {
             else if (rank === 2) rankClass = "rank-2";
             else if (rank === 3) rankClass = "rank-3";
 
-            // 計算分數差距
             const scoreDiff = t.score - t.prevScore;
-            const diffSpan = scoreDiff > 0 ? `<span class="score-diff">(+${scoreDiff})</span>` : "";
+            const diffSpan = scoreDiff > 0 ? `<span class="score-diff">(+${scoreDiff})</span>` : (scoreDiff < 0 ? `<span class="score-diff" style="color:var(--danger-red);">(${scoreDiff})</span>` : "");
 
             return `
                 <div class="leaderboard-item ${rankClass}" data-team-id="${t.id}">
                     <div class="rank-badge">${rank}</div>
                     <div class="team-name">${t.name}</div>
-                    <div class="team-stamina">
-                        <span class="stamina-text" style="color: #cbd5e1;">⚡體力: ${t.stamina}</span>
-                    </div>
                     <div class="team-score">
                         ${diffSpan}
                         <span>${t.score}</span>
@@ -403,84 +397,6 @@ function renderLeaderboard() {
             `;
         })
         .join("");
-}
-
-/* ========================================================
-   同步轉盤 (Synced Roulette Wheel) 控制邏輯
-   ======================================================= */
-const projRouletteModal = document.getElementById("projector-roulette-modal");
-const projRouletteWheel = document.getElementById("projector-roulette-wheel");
-const projWheelResultText = document.getElementById("projector-wheel-result-text");
-
-function handleSyncedWheelSpin(eventData) {
-    if (!eventData) return;
-    const { candidates, winnerId, targetDeg, timestamp } = eventData;
-    
-    // 如果是太久以前的事件，不重播
-    if (Date.now() - timestamp > 6000) return;
-
-    projWheelResultText.textContent = "命運椰子樹正在搖晃...";
-    projRouletteWheel.style.transition = "none";
-    projRouletteWheel.style.transform = "rotate(0deg)";
-    
-    // 構建轉盤顏色背景
-    const n = candidates.length;
-    const colors = [
-        "var(--sunset-orange)", "var(--ocean-dark)", "var(--success-green)", 
-        "var(--sunset-yellow)", "var(--sunset-pink)", "#8b5cf6", "#06b6d4", "#f43f5e"
-    ];
-    
-    let conicParts = [];
-    const step = 100 / n;
-    for (let i = 0; i < n; i++) {
-        const c = colors[i % colors.length];
-        conicParts.push(`${c} ${i * step}% ${(i + 1) * step}%`);
-    }
-    
-    projRouletteWheel.style.background = `conic-gradient(${conicParts.join(", ")})`;
-    
-    // 繪製文字
-    projRouletteWheel.innerHTML = candidates
-        .map((c, i) => {
-            const angle = (360 / n) * i + (360 / n) / 2;
-            return `
-                <div style="
-                    position: absolute; 
-                    top: 50%; left: 50%; 
-                    transform: translate(-50%, -50%) rotate(${angle}deg) translateY(-80px);
-                    color: white; 
-                    font-weight: 800; 
-                    font-size: 0.9rem;
-                    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-                    pointer-events: none;
-                    white-space: nowrap;
-                ">
-                    ${c.name}
-                </div>
-            `;
-        })
-        .join("");
-
-    projRouletteModal.style.display = "flex";
-
-    // 啟動旋轉動畫 (非同步延時以觸發 transition)
-    setTimeout(() => {
-        projRouletteWheel.style.transition = "transform 4s cubic-bezier(0.15, 0.85, 0.35, 1.02)";
-        projRouletteWheel.style.transform = `rotate(${targetDeg}deg)`;
-    }, 50);
-
-    // 播放揭曉結果
-    setTimeout(() => {
-        const winner = candidates.find(c => c.id === winnerId);
-        if (winner) {
-            projWheelResultText.innerHTML = `🎉 恭喜！由 <strong>${winner.name}</strong> 獲得進入前鋒的資格！`;
-            playCheer();
-        }
-    }, 4100);
-}
-
-function closeProjectorWheel() {
-    projRouletteModal.style.display = "none";
 }
 
 /* ========================================================
@@ -523,7 +439,6 @@ class ConfettiParticle {
         this.y += this.speedY;
         this.rotation += this.rotationSpeed;
         
-        // 觸底重播 (若仍在撒花狀態)
         if (this.y > canvas.height) {
             if (isConfettiActive) {
                 this.y = -20;
@@ -556,7 +471,6 @@ function startConfetti() {
             p.draw();
         });
 
-        // 過濾掉掉出螢幕且沒有重生的粒子
         particles = particles.filter(p => p.y <= canvas.height || isConfettiActive);
 
         if (particles.length > 0 || isConfettiActive) {
@@ -569,5 +483,4 @@ function startConfetti() {
 
 function stopConfetti() {
     isConfettiActive = false;
-    // 粒子會自然掉出螢幕後，loop 會自動結束停止繪製
 }

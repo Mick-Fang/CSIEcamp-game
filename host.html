@@ -66,173 +66,79 @@
                     <form id="setup-form">
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
                             <!-- Generate 10 team name inputs -->
-                            <div class="form-group">
-                                <label class="form-label">小隊 1 名稱</label>
-                                <input type="text" class="form-input" name="team-1" value="第一小隊">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">小隊 2 名稱</label>
-                                <input type="text" class="form-input" name="team-2" value="第二小隊">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">小隊 3 名稱</label>
-                                <input type="text" class="form-input" name="team-3" value="第三小隊">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">小隊 4 名稱</label>
-                                <input type="text" class="form-input" name="team-4" value="第四小隊">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">小隊 5 名稱</label>
-                                <input type="text" class="form-input" name="team-5" value="第五小隊">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">小隊 6 名稱</label>
-                                <input type="text" class="form-input" name="team-6" value="第六小隊">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">小隊 7 名稱</label>
-                                <input type="text" class="form-input" name="team-7" value="第七小隊">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">小隊 8 名稱</label>
-                                <input type="text" class="form-input" name="team-8" value="第八小隊">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">小隊 9 名稱</label>
-                                <input type="text" class="form-input" name="team-9" value="第九小隊">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">小隊 10 名稱</label>
-                                <input type="text" class="form-input" name="team-10" value="第十小隊">
-                            </div>
+                            <div class="form-group"><label class="form-label">小隊 1 名稱</label><input type="text" class="form-input" name="team-1" value="第一小隊"></div>
+                            <div class="form-group"><label class="form-label">小隊 2 名稱</label><input type="text" class="form-input" name="team-2" value="第二小隊"></div>
+                            <div class="form-group"><label class="form-label">小隊 3 名稱</label><input type="text" class="form-input" name="team-3" value="第三小隊"></div>
+                            <div class="form-group"><label class="form-label">小隊 4 名稱</label><input type="text" class="form-input" name="team-4" value="第四小隊"></div>
+                            <div class="form-group"><label class="form-label">小隊 5 名稱</label><input type="text" class="form-input" name="team-5" value="第五小隊"></div>
+                            <div class="form-group"><label class="form-label">小隊 6 名稱</label><input type="text" class="form-input" name="team-6" value="第六小隊"></div>
+                            <div class="form-group"><label class="form-label">小隊 7 名稱</label><input type="text" class="form-input" name="team-7" value="第七小隊"></div>
+                            <div class="form-group"><label class="form-label">小隊 8 名稱</label><input type="text" class="form-input" name="team-8" value="第八小隊"></div>
+                            <div class="form-group"><label class="form-label">小隊 9 名稱</label><input type="text" class="form-input" name="team-9" value="第九小隊"></div>
+                            <div class="form-group"><label class="form-label">小隊 10 名稱</label><input type="text" class="form-input" name="team-10" value="第十小隊"></div>
                         </div>
                         <button type="submit" class="btn btn-success" style="width: 100%;">🌴 開始椰子怪討伐戰！</button>
                     </form>
                 </section>
 
-                <!-- BID_VANGUARD PHASE -->
-                <section id="phase-bid-vanguard" class="glass-card host-section phase-card" style="display: none; border-left-color: var(--ocean-dark);">
+                <!-- BID PHASE -->
+                <section id="phase-bid" class="glass-card host-section phase-card" style="display: none; border-left-color: var(--ocean-dark);">
                     <div class="host-card-title">
-                        <h2>⚔️ 第 <span class="round-num-text">1</span> 回合：前鋒競標與召喚</h2>
-                        <span class="phase-header-badge" style="background: var(--ocean-dark);">前鋒競標中</span>
+                        <h2>⚔️ 第 <span class="round-num-text">1</span> 回合：投入體力</h2>
+                        <span class="phase-header-badge" style="background: var(--ocean-dark);">競標中</span>
+                    </div>
+                    <div class="glass-card" style="background: rgba(239, 68, 68, 0.05); border-color: rgba(239, 68, 68, 0.1); margin-bottom: 1rem; text-align: center;">
+                        <h3 style="color: var(--danger-red); margin-bottom: 0.5rem;">本回合魔王：<span id="bid-monster-name">-</span></h3>
+                        <p style="font-size: 1.25rem; font-weight: 700;">魔王血量 (H)：<span id="bid-monster-hp">-</span></p>
                     </div>
                     <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
-                        請輸入各隊秘密提交的<strong>「邪惡椰子數量（0-3 顆）」</strong>及<strong>「前鋒投標體力（0-100 點）」</strong>。
+                        請輸入各隊秘密提交的<strong>「投入體力（0-80 點）」</strong>。
+                        <br>
+                        <em>注意：若有多隊投入相同體力，將被判定為棄權並扣 1 分。</em>
                     </p>
-                    <form id="bid-vanguard-form">
+                    <form id="bid-form">
                         <table class="team-table">
                             <thead>
                                 <tr>
                                     <th>小隊名稱</th>
-                                    <th>👿 邪惡椰子 (0-3)</th>
-                                    <th>⚡ 前鋒投標體力 (0-100)</th>
+                                    <th>⚡ 投入體力 (0-80)</th>
                                 </tr>
                             </thead>
-                            <tbody id="vanguard-inputs-tbody">
+                            <tbody id="bid-inputs-tbody">
                                 <!-- Inputs inserted via JS -->
                             </tbody>
                         </table>
-                        <button type="submit" class="btn btn-primary" style="width: 100%;">🔮 召喚椰子怪並計算前鋒</button>
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">🔮 結算體力並進入攻擊階段</button>
                     </form>
                 </section>
 
-                <!-- BATTLE_VANGUARD PHASE -->
-                <section id="phase-battle-vanguard" class="glass-card host-section phase-card" style="display: none; border-left-color: var(--danger-red);">
+                <!-- BATTLE PHASE -->
+                <section id="phase-battle" class="glass-card host-section phase-card" style="display: none; border-left-color: var(--danger-red);">
                     <div class="host-card-title">
-                        <h2>🔥 第 <span class="round-num-text">1</span> 回合：前鋒討伐決戰</h2>
-                        <span class="phase-header-badge" style="background: var(--danger-red);">前鋒討伐戰</span>
+                        <h2>🔥 第 <span class="round-num-text">1</span> 回合：討伐進行中</h2>
+                        <span class="phase-header-badge" style="background: var(--danger-red);">戰鬥中</span>
                     </div>
 
-                    <!-- Tie resolution section if needed -->
-                    <div id="vanguard-tie-resolution-box" class="glass-card" style="display: none; border: 2px solid var(--sunset-orange); margin-bottom: 1.5rem; background: #fffbeb;">
-                        <h3 style="color: var(--sunset-orange); margin-bottom: 0.5rem;">⚠️ 前鋒競標同分平手決議</h3>
-                        <p id="vanguard-tie-text" style="font-size: 0.95rem; margin-bottom: 1rem;"></p>
-                        <div id="vanguard-tie-candidates-container" style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
-                            <!-- Checkboxes for ties -->
-                        </div>
-                        <div style="display: flex; gap: 1rem;">
-                            <button type="button" class="btn btn-secondary" onclick="spinVanguardWheel()">🎡 開啟轉盤抽籤</button>
-                            <button type="button" class="btn btn-success" onclick="submitVanguardTieSelection()">✅ 確認平手隊伍進入前鋒</button>
-                        </div>
-                    </div>
-
-                    <div id="vanguard-battle-controls" style="display: block;">
+                    <div id="battle-controls" style="display: block;">
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
                             <div class="glass-card" style="background: rgba(239, 68, 68, 0.05); border-color: rgba(239, 68, 68, 0.1);">
                                 <h4 style="color: var(--danger-red); margin-bottom: 0.5rem;">👾 當前椰子怪</h4>
-                                <p style="font-size: 1.25rem; font-weight: 700;" id="vanguard-monster-name">-</p>
-                                <p style="font-size: 1.1rem;">血量：<span id="vanguard-monster-hp">-</span> / <span id="vanguard-monster-maxhp">-</span></p>
+                                <p style="font-size: 1.25rem; font-weight: 700;" id="battle-monster-name">-</p>
+                                <p style="font-size: 1.1rem;">血量：<span id="battle-monster-hp">-</span></p>
                             </div>
                             <div class="glass-card" style="background: rgba(56, 189, 248, 0.05); border-color: rgba(56, 189, 248, 0.1);">
-                                <h4 style="color: var(--ocean-dark); margin-bottom: 0.5rem;">🏹 前鋒部隊</h4>
-                                <ul id="vanguard-team-list" style="margin-left: 1.2rem; font-size: 0.95rem;">
+                                <h4 style="color: var(--ocean-dark); margin-bottom: 0.5rem;">🏹 攻擊序列</h4>
+                                <ul id="battle-sequence-list" style="margin-left: 1.2rem; font-size: 0.95rem;">
                                     <!-- List items -->
                                 </ul>
-                                <p style="margin-top: 0.5rem; font-weight: 700;">前鋒總攻擊力：<span id="vanguard-damage-text">-</span></p>
                             </div>
                         </div>
 
                         <div style="text-align: center;">
-                            <button class="btn btn-danger" onclick="executeVanguardBattle()" style="width: 100%; font-size: 1.3rem; padding: 1rem;">
-                                💥 進行前鋒討伐戰（扣除血量）
+                            <button class="btn btn-danger" onclick="executeBattle()" style="width: 100%; font-size: 1.3rem; padding: 1rem;">
+                                💥 播放攻擊動畫並結算本回合
                             </button>
                         </div>
-                    </div>
-                </section>
-
-                <!-- BID_SUPPORT PHASE -->
-                <section id="phase-bid-support" class="glass-card host-section phase-card" style="display: none; border-left-color: var(--sunset-yellow);">
-                    <div class="host-card-title">
-                        <h2>🛡️ 第 <span class="round-num-text">1</span> 回合：後援部隊補刀競標</h2>
-                        <span class="phase-header-badge" style="background: var(--sunset-yellow); color: var(--coconut-brown);">後援競標中</span>
-                    </div>
-                    <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
-                        【前鋒討伐失敗】椰子怪仍殘血存活！請<strong>其餘隊伍（非前鋒者）</strong>秘密提交<strong>「後援競標體力」</strong>（不得高於剩餘體力）。
-                    </p>
-                    <form id="bid-support-form">
-                        <table class="team-table">
-                            <thead>
-                                <tr>
-                                    <th>小隊名稱</th>
-                                    <th>⚡ 剩餘體力</th>
-                                    <th>🏹 後援投標體力</th>
-                                </tr>
-                            </thead>
-                            <tbody id="support-inputs-tbody">
-                                <!-- Inputs inserted via JS -->
-                            </tbody>
-                        </table>
-                        <button type="submit" class="btn btn-primary" style="width: 100%;">🔮 計算後援與背叛者</button>
-                    </form>
-                </section>
-
-                <!-- BATTLE_SUPPORT PHASE -->
-                <section id="phase-battle-support" class="glass-card host-section phase-card" style="display: none; border-left-color: var(--coconut-leaf);">
-                    <div class="host-card-title">
-                        <h2>⚔️ 第 <span class="round-num-text">1</span> 回合：後援最後一擊</h2>
-                        <span class="phase-header-badge" style="background: var(--coconut-leaf);">後援討伐戰</span>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
-                        <div class="glass-card" style="background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.1);">
-                            <h4 style="color: var(--coconut-leaf); margin-bottom: 0.5rem;">👾 殘血椰子怪</h4>
-                            <p style="font-size: 1.25rem; font-weight: 700;" id="support-monster-name">-</p>
-                            <p style="font-size: 1.1rem;">剩餘血量：<span id="support-monster-hp">-</span></p>
-                        </div>
-                        <div class="glass-card" style="background: rgba(139, 92, 246, 0.05); border-color: rgba(139, 92, 246, 0.1);">
-                            <h4 style="color: #8b5cf6; margin-bottom: 0.5rem;">🛡️ 後援部隊</h4>
-                            <ul id="support-team-list" style="margin-left: 1.2rem; font-size: 0.95rem;">
-                                <!-- List items -->
-                            </ul>
-                            <p style="margin-top: 0.5rem; font-weight: 700;">後援總攻擊力：<span id="support-damage-text">-</span></p>
-                        </div>
-                    </div>
-
-                    <div style="text-align: center;">
-                        <button class="btn btn-success" onclick="executeSupportBattle()" style="width: 100%; font-size: 1.3rem; padding: 1rem;">
-                            ⚔️ 進行後援討伐（判定勝負）
-                        </button>
                     </div>
                 </section>
 
@@ -251,7 +157,7 @@
                     </div>
 
                     <button class="btn btn-accent" onclick="nextRound()" style="width: 100%; font-size: 1.25rem; padding: 0.75rem;">
-                        ➡️ 進入下一回合 (第 <span id="next-round-num-text">2</span>/8 回合)
+                        ➡️ 進入下一回合 (第 <span id="next-round-num-text">2</span>/10 回合)
                     </button>
                 </section>
 
@@ -262,16 +168,16 @@
                         <span class="phase-header-badge" style="background: var(--sunset-yellow); color: var(--coconut-brown);">遊戲結束</span>
                     </div>
                     <p style="margin-bottom: 1.5rem; font-size: 1.1rem; text-align: center; font-weight: 600;">
-                        恭喜所有討伐英雄！討伐椰子怪計畫大獲成功！
+                        恭喜所有討伐英雄！經過 10 回合的戰鬥，討伐椰子怪計畫大獲成功！
                     </p>
                     <button class="btn btn-primary" onclick="resetGame()" style="width: 100%;">🔄 重新開始新遊戲</button>
                 </section>
 
                 <!-- Override Section: Manual adjustments (Host Power) -->
                 <section class="glass-card" style="border-top: 4px solid #94a3b8; margin-top: 2rem;">
-                    <h3>🛡️ 主持人手動修正與控制面板</h3>
+                    <h3>🛡️ 主持人手動修正面板</h3>
                     <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
-                        若現場有實體競標出入、分數加減算算錯，主持人都可於此面板即時修改數據，投影畫面將立即同步。
+                        若現場有分數加減算錯，主持人都可於此面板即時修改數據，投影畫面將立即同步。
                     </p>
                     <div class="override-grid" id="override-teams-container">
                         <!-- Instantiated via JS -->
@@ -285,17 +191,16 @@
                 <div class="glass-card" style="margin-bottom: 1.5rem;">
                     <h3>🎮 遊戲狀態資訊</h3>
                     <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.95rem;">
-                        <p><strong>目前回合：</strong>第 <span id="info-round">-</span> / 8 回合</p>
+                        <p><strong>目前回合：</strong>第 <span id="info-round">-</span> / 10 回合</p>
                         <p><strong>目前階段：</strong><span id="info-phase-name">-</span></p>
                         <p><strong>怪物種類：</strong><span id="info-monster-name">-</span></p>
                         <p><strong>怪物血量：</strong><span id="info-monster-hp">-</span></p>
-                        <p><strong>椰子總數：</strong><span id="info-coconut-count">-</span> 顆</p>
                     </div>
                 </div>
 
                 <!-- Scores summary -->
                 <div class="glass-card" style="margin-bottom: 1.5rem;">
-                    <h3>📈 小隊即時分數/體力</h3>
+                    <h3>📈 小隊即時分數</h3>
                     <div id="aside-teams-list" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.9rem;">
                         <!-- Lists teams -->
                     </div>
@@ -309,24 +214,6 @@
                     </div>
                 </div>
             </aside>
-        </div>
-    </div>
-
-    <!-- Tie-breaker Roulette Wheel Modal -->
-    <div id="roulette-modal" class="spinner-modal" style="display: none;">
-        <div class="spinner-content">
-            <h3 style="color: var(--sunset-orange); margin-bottom: 1rem;">🎰 命運椰子大轉盤</h3>
-            <div class="wheel-container">
-                <div class="wheel-pointer"></div>
-                <div id="roulette-wheel" class="roulette-wrapper">
-                    <!-- Slices generated dynamically -->
-                </div>
-                <button class="btn btn-primary" id="spin-btn" onclick="spinTheWheelAction()">🌀 開始轉動</button>
-            </div>
-            <p id="wheel-result-text" style="font-weight: 700; color: var(--coconut-brown); min-height: 24px;"></p>
-            <button class="btn btn-secondary" id="close-wheel-btn" onclick="closeWheel()" style="margin-top: 1rem; display: none; width: 100%;">
-                套用結果並關閉
-            </button>
         </div>
     </div>
 
