@@ -69,8 +69,8 @@ const DEFAULT_STATE = {
     teams: Array.from({ length: 10 }, (_, i) => ({
         id: i + 1,
         name: `第 ${i + 1} 小隊`,
-        score: 0,
-        prevScore: 0,
+        score: 10,
+        prevScore: 10,
         bid: 0, // 投入體力
         status: "none", // none, valid, skipped, winner
         scoreGainedThisRound: 0
@@ -133,8 +133,8 @@ class GameEngine {
         this.state.teams = Array.from({ length: 10 }, (_, i) => ({
             id: i + 1,
             name: names[i] || `第 ${i + 1} 小隊`,
-            score: 0,
-            prevScore: 0,
+            score: 10,
+            prevScore: 10,
             bid: 0,
             status: "none",
             scoreGainedThisRound: 0
