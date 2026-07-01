@@ -198,12 +198,13 @@ class GameEngine {
             // 3, 5, 7 best fit: 最接近剩餘血量，差值相同時小於血量者優先
             const hp = this.state.monster.hp;
             validTeams.sort((a, b) => {
+                const aValid = a.bid <= hp;
+                const bValid = b.bid <= hp;
+                if (aValid && !bValid) return -1;
+                if (!aValid && bValid) return 1;
                 const diffA = Math.abs(a.bid - hp);
                 const diffB = Math.abs(b.bid - hp);
-                if (diffA !== diffB) return diffA - diffB;
-                if (a.bid <= hp && b.bid > hp) return -1;
-                if (b.bid <= hp && a.bid > hp) return 1;
-                return 0;
+                return diffA - diffB;
             });
         }
         
@@ -234,13 +235,13 @@ class GameEngine {
             if (!bossDefeated && (round === 3 || round === 5 || round === 7)) {
                 const hp = this.state.monster.hp;
                 pendingSequence.sort((a, b) => {
+                    const aValid = a.bid <= hp;
+                    const bValid = b.bid <= hp;
+                    if (aValid && !bValid) return -1;
+                    if (!aValid && bValid) return 1;
                     const diffA = Math.abs(a.bid - hp);
                     const diffB = Math.abs(b.bid - hp);
-                    if (diffA !== diffB) return diffA - diffB;
-                    // 當差值一樣時，優先挑選小於等於 Boss 剩餘 HP 的隊伍
-                    if (a.bid <= hp && b.bid > hp) return -1;
-                    if (b.bid <= hp && a.bid > hp) return 1;
-                    return 0;
+                    return diffA - diffB;
                 });
             }
 
