@@ -9,22 +9,16 @@ const ROUND_MONSTERS = [
         img: "assets/goblin_chief.png"
     },
     {
-        name: "鐵殼椰核食人魔",
-        hp: 320,
-        desc: "以堅硬無比的椰核為核心變異而成的南島巨漢，手持巨大的芭蕉葉當作武器。",
-        img: "assets/troll_ogre.png"
-    },
-    {
-        name: "狂野椰棕猛獸",
-        hp: 225,
-        desc: "身上披著厚重、堅韌「椰子纖維（椰棕）」的叢林巨獸，防禦力極高。",
-        img: "assets/beast_king.png"
-    },
-    {
         name: "風暴椰鱗巨翼龍",
         hp: 512,
         desc: "鱗片由堅硬的綠色椰子殼組成，拍打翅膀時會捲起熱帶氣旋與熱帶雨林的風暴。",
         img: "assets/storm_dragon.png"
+    },
+    {
+        name: "鐵殼椰核食人魔",
+        hp: 290,
+        desc: "以堅硬無比的椰核為核心變異而成的南島巨漢，手持巨大的芭蕉葉當作武器。",
+        img: "assets/troll_ogre.png"
     },
     {
         name: "椰漿軟泥酋長",
@@ -33,20 +27,8 @@ const ROUND_MONSTERS = [
         img: "assets/slime_chief.png"
     },
     {
-        name: "海溝腐椰海神",
-        hp: 700,
-        desc: "沉入深海海溝、吸收了無數深海怨念的巨大腐爛椰子，周圍伴隨著深海的海妖。",
-        img: "assets/abyss_sea_god.png"
-    },
-    {
-        name: "遠古珊瑚椰石像",
-        hp: 399,
-        desc: "長滿青苔與附著著熱帶珊瑚的巨大摩艾石像，頭頂長著一顆巨大的椰子樹。",
-        img: "assets/coral_golem.png"
-    },
-    {
         name: "黑潮椰蟹騎士",
-        hp: 468,
+        hp: 479,
         desc: "南島原住民的怨靈，騎乘著體型巨大的深海椰子蟹，從黑潮中登陸。",
         img: "assets/crab_rider.png"
     },
@@ -55,6 +37,12 @@ const ROUND_MONSTERS = [
         hp: 654,
         desc: "被吸乾水分的枯死椰子樹與白骨結合，手持插著骷髏的椰子手杖，會施放南島巫術。",
         img: "assets/skeleton_priest.png"
+    },
+    {
+        name: "遠古珊瑚椰石像",
+        hp: 399,
+        desc: "長滿青苔與附著著熱帶珊瑚的巨大摩艾石像，頭頂長著一顆巨大的椰子樹。",
+        img: "assets/coral_golem.png"
     },
     {
         name: "終焉滅世巨椰祖靈",
@@ -197,9 +185,27 @@ class GameEngine {
 
         this.state.phase = "BATTLE";
         
-        // 準備攻擊順序 (由高到低，剔除棄權)
+        // 準備攻擊順序 (剔除棄權)
         const validTeams = this.state.teams.filter(t => t.status === "valid");
-        validTeams.sort((a, b) => b.bid - a.bid);
+        const round = this.state.round;
+        if (round === 1 || round === 4) {
+            // 1, 4 由大到小
+            validTeams.sort((a, b) => b.bid - a.bid);
+        } else if (round === 2 || round === 6 || round === 8) {
+            // 2, 6, 8 由小到大
+            validTeams.sort((a, b) => a.bid - b.bid);
+        } else if (round === 3 || round === 5 || round === 7) {
+            // 3, 5, 7 best fit: 最接近剩餘血量，差值相同時小於血量者優先
+            const hp = this.state.monster.hp;
+            validTeams.sort((a, b) => {
+                const diffA = Math.abs(a.bid - hp);
+                const diffB = Math.abs(b.bid - hp);
+                if (diffA !== diffB) return diffA - diffB;
+                if (a.bid <= hp && b.bid > hp) return -1;
+                if (b.bid <= hp && a.bid > hp) return 1;
+                return 0;
+            });
+        }
         
         this.state.attackSequence = validTeams.map(t => ({
             teamId: t.id,
@@ -219,13 +225,32 @@ class GameEngine {
         let bossDefeated = false;
         let winnerTeamId = null;
 
-        for (let i = 0; i < this.state.attackSequence.length; i++) {
-            const seq = this.state.attackSequence[i];
+        let processedSequence = [];
+        let pendingSequence = [...this.state.attackSequence];
+        let round = this.state.round;
+
+        while (pendingSequence.length > 0) {
+            // 在 best fit 回合 (3, 5, 7) 且 Boss 還活著時，動態依照「最接近當前剩餘血量（且不超過）」排序
+            if (!bossDefeated && (round === 3 || round === 5 || round === 7)) {
+                const hp = this.state.monster.hp;
+                pendingSequence.sort((a, b) => {
+                    const diffA = Math.abs(a.bid - hp);
+                    const diffB = Math.abs(b.bid - hp);
+                    if (diffA !== diffB) return diffA - diffB;
+                    // 當差值一樣時，優先挑選小於等於 Boss 剩餘 HP 的隊伍
+                    if (a.bid <= hp && b.bid > hp) return -1;
+                    if (b.bid <= hp && a.bid > hp) return 1;
+                    return 0;
+                });
+            }
+
+            const seq = pendingSequence.shift();
             const team = this.state.teams.find(t => t.id === seq.teamId);
             
             if (bossDefeated) {
                 seq.result = 'skipped_boss_dead';
                 seq.hpAfter = 0;
+                processedSequence.push(seq);
                 continue;
             }
 
@@ -244,7 +269,11 @@ class GameEngine {
                 seq.result = 'hit';
                 this.addLog(`【${team.name}】造成 ${seq.bid} 傷害，Boss 剩餘血量 ${this.state.monster.hp}。`);
             }
+            
+            processedSequence.push(seq);
         }
+        
+        this.state.attackSequence = processedSequence;
 
         // 如果所有人都打完，Boss 還活著，由第一個打的人獲得 1 分
         if (!bossDefeated && this.state.attackSequence.length > 0) {
@@ -271,9 +300,9 @@ class GameEngine {
 
     // 進行下一輪或結束遊戲
     nextRound() {
-        if (this.state.round >= 10) {
+        if (this.state.round >= 8) {
             this.state.phase = "GAME_OVER";
-            this.addLog(`10 回合討伐戰結束！遊戲進入最終結算。`);
+            this.addLog(`8 回合討伐戰結束！遊戲進入最終結算。`);
         } else {
             this.state.round += 1;
             

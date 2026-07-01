@@ -293,7 +293,7 @@ function renderRoundEndPanel() {
         .join("");
 
     const nextBtnText = document.getElementById("next-round-num-text");
-    if (state.round >= 10) {
+    if (state.round >= 8) {
         nextBtnText.parentElement.innerHTML = "🏆 結束討伐，進入最終排行榜";
     } else {
         nextBtnText.textContent = state.round + 1;

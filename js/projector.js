@@ -140,6 +140,17 @@ function renderProjector() {
         stopConfetti();
     } else if (state.phase === "BID") {
         viewBid.style.display = "block";
+        const ruleTextObj = document.getElementById("projector-bid-rule-text");
+        if (ruleTextObj) {
+            const r = state.round;
+            if (r === 1 || r === 4) {
+                ruleTextObj.textContent = "投入體力最高者將優先出手，若順利擊殺 Boss 即可得分！";
+            } else if (r === 2 || r === 6 || r === 8) {
+                ruleTextObj.textContent = "投入體力最少者將優先出手，若順利擊殺 Boss 即可得分！";
+            } else if (r === 3 || r === 5 || r === 7) {
+                ruleTextObj.textContent = "投入體力最接近 Boss 當前剩餘體力 (且不超過) 者將優先出手，若順利擊殺 Boss 即可得分！";
+            }
+        }
         stopConfetti();
     } else if (state.phase === "BATTLE") {
         renderBattlePanel();
